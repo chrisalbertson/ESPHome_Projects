@@ -1,0 +1,67 @@
+
+# -----------------------------------------------------------------------------
+# PROCESSOR / BOARD
+# -----------------------------------------------------------------------------
+# Defines which ESP32 chip and development framework to use.
+# - board: The ESP32-S3 development kit configuration
+# - framework: esp-idf is Espressif's official development framework
+#              (more powerful than Arduino, required for this display)
+# -----------------------------------------------------------------------------
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+
+# -----------------------------------------------------------------------------
+# ESPHOME DEVICE IDENTITY
+# -----------------------------------------------------------------------------
+# Basic device information visible in Home Assistant.
+# - name: Internal hostname (used for mDNS, e.g., device-name.local)
+# - friendly_name: Human-readable name shown in Home Assistant UI
+# - area: Which room/area this device belongs to in Home Assistant
+#
+# These values come from variables ($name, etc.) defined in template.yaml
+# -----------------------------------------------------------------------------
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_device_name}
+  area: ${device_area}
+
+
+# -----------------------------------------------------------------------------
+# LOGGING
+# -----------------------------------------------------------------------------
+# Outputs debug messages for troubleshooting.
+# View logs in ESPHome dashboard or via serial connection.
+# -----------------------------------------------------------------------------
+logger:
+  level: DEBUG
+
+
+# -----------------------------------------------------------------------------
+# OVER THE AIR (OTA) UPDATES
+# -----------------------------------------------------------------------------
+# Allows updating the firmware wirelessly without plugging in USB.
+# Once configured, you can flash new code from ESPHome dashboard.
+# -----------------------------------------------------------------------------
+ota:
+  - platform: esphome
+    password: "62ad752ac46955bb4b6d642eb3194d5b"
+    on_begin: # prevent screen flickering during OTA
+      - light.turn_off:
+          id: backlight
+          transition_length: 0s
+      - lambda: "id(backlight).loop();"
+
+
+# -----------------------------------------------------------------------------
+# HOME ASSISTANT API
+# -----------------------------------------------------------------------------
+# Enables communication between this device and Home Assistant.
+# Without this, the device won't appear in Home Assistant.
+# The encryption key is typically set in your secrets.yaml file.
+# -----------------------------------------------------------------------------
+api:
+  encryption:
+    key: "pJvCTUg3IwxXN9APOoauwLQq5KxFjUK+iA2RJpVGwm4="

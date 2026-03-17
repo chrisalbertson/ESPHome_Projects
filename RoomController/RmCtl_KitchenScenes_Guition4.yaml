@@ -1,0 +1,61 @@
+######################################################################
+######################################################################
+##
+##  RCL, "Hard Configured" for the kitchen, running on device ""
+##  with capacitive touch
+##
+##  The hardware is descibed in good detail here:
+##    https://devices.esphome.io/devices/guition-esp32-s3-4848s040/
+##
+##  Author:   Chris Albertson
+##  Version:  1.0
+##  Date:     December 2025
+#######################################################################
+
+substitutions:
+  device_name: rmctl_g4
+  Freindly_device_name: Room Controller Guition4
+
+  wled_undercounter_main:    wled_kitchen_main
+  wled_undercounter:         wled_kitchen
+
+
+packages:
+  - !include "../common/wifi.yaml"
+  - !include "../common/device_base.yaml"
+  - !include "../common/wifi_label.yaml"
+  - !include "../common/time_label.yaml"
+  - !include "../common/board_guition4.yaml"
+  - !include "../common/kitchen_scenes_lvgl.yaml"
+  - !include "../common/kitchen_scenes_sensors.yaml"
+
+
+api:
+  on_client_connected:
+    ## FIXME This does not belog here, has nothing to do with Wifi icon.
+    - homeassistant.action:
+        ## Sets overall scale factor to 100%.  Does not actually turn the LEDs on
+        action: light.turn_on   #<<<<<< TODO: Should only do this once <<<
+        data:
+          entity_id: light.${wled_kitchen_main}
+          brightness: 100%
+  
+    
+#####
+# ============================================================ 
+# Expose this to Home Assistant
+#
+number:
+  - platform: template
+    name: LVGL Screen timeout
+    optimistic: true
+    id: display_timeout
+    unit_of_measurement: "s"
+    initial_value: 60
+    restore_value: true
+    min_value: 10
+    max_value: 180
+    step: 5
+    mode: box
+    
+  

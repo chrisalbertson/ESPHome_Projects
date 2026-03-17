@@ -1,0 +1,183 @@
+######################################################################
+######################################################################
+##
+##  RCL, "Hard Configured" for the kitchen, running on device ""
+##  with capacitive touch
+##
+##  The hardware is descibed in good detail here:
+##    https://devices.esphome.io/devices/guition-esp32-s3-4848s040/
+##
+##  Author:   Chris Albertson
+##  Version:  1.0
+##  Date:     December 2025
+#######################################################################
+
+substitutions:
+  device_name: rmctl_g4
+  Freindly_device_name: Room Controller Guition4
+
+  wled_undercounter_main:    wled_kitchen_main
+  wled_undercounter:         wled_kitchen
+
+
+packages:
+  - !include "../common/wifi.yaml"
+  - !include "../common/device_base.yaml"
+  - !include "../common/board_guition4.yaml"
+  - !include "../common/kitchen_scenes.yaml"
+
+
+# =============================================================================
+# HARDWARE CONFIGURATION - Guition ESP32-S3-4848S040
+# =============================================================================
+# This file defines the physical hardware settings for the ESP32 touchscreen.
+# It tells ESPHome how to communicate with the display, touchscreen, and
+# other components on this specific device.
+#
+# WARNING: These settings are specific to the Guition ESP32-S3-4848S040.
+#          Using this config with a different device may cause issues.
+# =============================================================================
+api:
+  # Display a WiFi icon at the upper right of the screen when
+  # connection is made to HA
+  on_client_connected:
+    - logger.log:
+        format: ">>>Client %s connected to API with IP %s"
+        args: ["client_info.c_str()", "client_address.c_str()"]
+        
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lvgl.widget.show: lbl_hastatus
+        
+    - homeassistant.action:
+        ## Sets overall scale factor to 100%.  Does not actually turn the LEDs on
+        action: light.turn_on   #<<<<<< TODO: Should only do this once <<<
+        data:
+          entity_id: light.${wled_kitchen_main}
+          brightness: 100%
+          
+    
+  # Remove the WiFi icon if the connection is lost     
+  on_client_disconnected:
+    - logger.log: ">>>API client disconnected!"
+    
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lvgl.widget.hide: lbl_hastatus
+
+
+    
+#####
+# ============================================================ 
+# Expose thes to Home Assistant
+#
+number:
+  - platform: template
+    name: LVGL Screen timeout
+    optimistic: true
+    id: display_timeout
+    unit_of_measurement: "s"
+    initial_value: 60
+    restore_value: true
+    min_value: 10
+    max_value: 180
+    step: 5
+    mode: box
+    
+    
+##############################################################
+##  Sensor -- Pull data from Home Assistant and update this 
+##            device so that it syncs with other controls
+############################################################## 
+sensor:
+  - platform: wifi_signal
+    name: "RSSI"
+    id: sensor_rssi
+    update_interval: 60s
+    entity_category: "diagnostic"
+    
+  - platform: homeassistant
+    id: cl_brightness_sensor_id
+    entity_id: light.kitchen_ceiling
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: cl_bright_slider
+          # value: !lambda return x;
+          value: !lambda if (isnan(x)) return 0.0; else return x;
+          
+  - platform: homeassistant
+    id: tl_brightness_sensor_id
+    entity_id: light.${wled_undercounter}
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: tl_bright_slider
+          # value: !lambda return x;
+          value: !lambda if (isnan(x)) return 0.0; else return x;
+          
+  - platform: homeassistant
+    id: cl_color_sensor_id
+    entity_id: light.kitchen_ceiling
+    attribute: color_temp_kelvin
+    on_value:
+      - lvgl.slider.update:
+          id: cl_color_slider
+          value: !lambda if (isnan(x)) return 0.0; else return int( (x - 2000) / 20);
+          
+  - platform: homeassistant
+    id: tl_color_sensor_id
+    entity_id: light.${wled_undercounter}
+    attribute: color_temp_kelvin
+    on_value:
+      - lvgl.slider.update:
+          id: tl_color_slider
+          value: !lambda if (isnan(x)) return 0.0; else return  int( (x - 2000) / 20);
+          
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      id: wifi_ip_address
+      name: "IP Address"
+      icon: "mdi:wan"
+      entity_category: "diagnostic"
+
+
+#####
+
+# ============================================================
+# TIME - per orologio
+# ============================================================
+time:
+  - platform: homeassistant
+    id: ha_time
+    ##timezone: "Europe/Rome"
+    on_time_sync:
+      then:
+        - script.execute: update_time
+    on_time:
+      - seconds: 0
+        then:
+          - script.execute: update_time
+
+# ============================================================
+# SCRIPT
+# ============================================================
+script:
+  # --- Aggiorna orario e data ---
+  - id: update_time
+    then:
+      - lvgl.label.update:
+          id: lbl_time
+          text:
+            # See https://esphome.io/components/time/ for time_format
+            time_format: "%a %I:%M %p"
+
+#####
+      
+        

@@ -1,0 +1,24 @@
+api:
+  # Display a WiFi icon at the upper right of the screen when
+  # connection is made to HA
+  on_client_connected:
+    - logger.log:
+        format: ">>>Client %s connected to API with IP %s"
+        args: ["client_info.c_str()", "client_address.c_str()"]
+        
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lvgl.widget.show: lbl_hastatus
+    
+  # Remove the WiFi icon if the connection is lost     
+  on_client_disconnected:
+    - logger.log: ">>>API client disconnected!"
+    
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lvgl.widget.hide: lbl_hastatus
+

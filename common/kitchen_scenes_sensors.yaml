@@ -1,0 +1,44 @@
+##############################################################
+##  Sensor -- Pull data from Home Assistant and update this 
+##            device so that it syncs with other controls
+############################################################## 
+sensor:
+    
+  - platform: homeassistant
+    id: cl_brightness_sensor_id
+    entity_id: light.kitchen_ceiling
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: cl_bright_slider
+          # value: !lambda return x;
+          value: !lambda if (isnan(x)) return 0.0; else return x;
+          
+  - platform: homeassistant
+    id: tl_brightness_sensor_id
+    entity_id: light.${wled_undercounter}
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: tl_bright_slider
+          # value: !lambda return x;
+          value: !lambda if (isnan(x)) return 0.0; else return x;
+          
+  - platform: homeassistant
+    id: cl_color_sensor_id
+    entity_id: light.kitchen_ceiling
+    attribute: color_temp_kelvin
+    on_value:
+      - lvgl.slider.update:
+          id: cl_color_slider
+          value: !lambda if (isnan(x)) return 0.0; else return int( (x - 2000) / 20);
+          
+  - platform: homeassistant
+    id: tl_color_sensor_id
+    entity_id: light.${wled_undercounter}
+    attribute: color_temp_kelvin
+    on_value:
+      - lvgl.slider.update:
+          id: tl_color_slider
+          value: !lambda if (isnan(x)) return 0.0; else return  int( (x - 2000) / 20);
+          

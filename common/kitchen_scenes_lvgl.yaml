@@ -1,0 +1,432 @@
+
+lvgl: 
+
+  on_idle:
+    timeout: !lambda "return (id(display_timeout).state * 1000);"
+    then:
+      - logger.log: "LVGL is idle"
+      - light.turn_off:
+          id: backlight
+          transition_length: 4s
+      - lvgl.pause:
+          show_snow: true
+
+  gradients:
+      - id: color_temp_gradient_id
+        direction: VER # VER, or hor, none (default is none)
+        #dither: ERR_DIFF  # none err_diff, ORDERED (default is none)
+        stops:
+          - color: 0x000070  # top color is blue
+            position: 100%   # Position at 100%
+          - color: 0x700000  # bottom color is red
+            position:   0%   # Position at 0% 
+            
+      - id: brightness_gradient_id
+        direction: VER # VER, or hor, none (default is none)
+        dither: none   # or err_diff, ordered (default is none)
+        stops:
+          - color: 0xFFFFFF  # top color is white
+            position: 100%   # Position at 100%
+          - color: 0x000000  # bottom color is black
+            position:   0%   # Position at 0%
+            
+              
+      - id: color_bar
+        direction: VER
+        dither: none
+        stops:
+          - color: 0xFF0000
+            position: 0
+          - color: 0xFFFF00
+            position: 42
+          - color: 0x00FF00
+            position: 84
+          - color: 0x00FFFF
+            position: 127
+          - color: 0x0000FF
+            position: 169
+          - color: 0xFF00FF
+            position: 212
+          - color: 0xFF0000
+            position: 255
+
+          
+  top_layer:
+    widgets:
+      
+        ###############################################
+        ## WiFi Connection indicator  
+        ###############################################
+        - label:
+            text: "\uF1EB"
+            id: lbl_hastatus
+            hidden: true
+            align: top_right
+            x: -5
+            #y:  2
+            text_align: right
+            # text_color: 0xFFFFFF
+            
+        ###############################################
+        ## time indicator  
+        ###############################################
+        - label:
+            text: "waiting..."
+            id: lbl_time
+            align: top_left
+            #x: -5
+            #y:  2
+            text_align: left
+            # text_color: 0xFFFFFF
+
+         
+        ###############################################
+        ## Page Footer, a row of four buttons.
+        ###############################################        
+        - buttonmatrix:
+            align: BOTTOM_MID
+            width:  100%
+            height: 100
+            one_checked: true
+            items:
+              bg_color: 0x0000FF
+              bg_grad_color: 0x000070
+              bg_grad_dir: VER
+              bg_opa: COVER
+              border_color: 0x0000F4
+              border_width: 2
+              text_color: 0xFFFFFF
+              text_font: montserrat_28
+              pressed:
+                bg_color: 0xFFFF00
+            id: footer_id
+            rows:
+              - buttons:
+                - id: goto_KS
+                  text: 'KS'
+                  control: 
+                    recolor: true
+                    popover: true
+                    checkable: true
+                  on_click:
+                    then:              
+                      lvgl.page.show: ks_page
+                - id: goto_CL
+                  text: 'CL'
+                  control: 
+                    recolor: true
+                    popover: true
+                    checkable: true
+                  on_click:
+                    then:              
+                      lvgl.page.show: cl_page
+                - id: goto_TL
+                  text: 'TL'
+                  control: 
+                    recolor: true
+                    popover: true
+                    checkable: true
+                  on_click:
+                    then:              
+                      lvgl.page.show: tl_page
+                - id: goto_MISC
+                  text: '?!'
+                  control:  
+                    recolor: true
+                    popover: true
+                    checkable: true
+                  on_click:
+                    then:              
+                      lvgl.page.show: misc_page
+
+ 
+
+
+ 
+  pages:            
+    ##############################
+    ##  KS - Kitchen Scenes Page
+    ##############################        
+    - id: ks_page
+      widgets:
+        
+        #######################
+        ## Page Header
+        #######################
+        - obj:
+            id: ks_header
+            width:  100%
+            height: 20
+            align: TOP_MID
+            widgets:
+              - label:
+                  align: CENTER
+                  text: 'Kitchen Scenes'
+            
+        ###############################
+        ## Scene Selector Buttons
+        ###############################
+        - buttonmatrix:
+            align_to:
+              id: ks_header
+              align: OUT_BOTTOM_LEFT
+            width:  100%
+            height: 360
+            items:
+              bg_color: 0x2F8CD8
+              bg_grad_color: 0x005280
+              bg_grad_dir: VER
+              bg_opa: COVER
+              border_color: 0x0077b3
+              border_width: 4
+              text_color: 0x000000
+              text_font: montserrat_32
+              pressed:
+                bg_color: 0xFFFF00
+            id: matrix_id
+            rows:
+              - buttons:
+                - id: button_ks1
+                  text: "bright"
+                  control:
+                    recolor: true
+                  on_click:
+                    then:                  
+                      - homeassistant.action: 
+                          action: scene.turn_on
+                          data:   
+                            entity_id: scene.kitchen_bright
+                          on_success:
+                            - logger.log: ">>>kitchen_bright set"
+                          on_error:
+                            - logger.log: ">>>ERROR kitchen_bright not set"
+                    
+              - buttons:
+                - id: button_ks2
+                  text: "med."
+                  control:
+                    recolor: true
+                  on_click:
+                    then:                  
+                      - homeassistant.action: 
+                          action: scene.turn_on
+                          data:   
+                            entity_id: scene.kitchen_med
+                          on_success:
+                            - logger.log: ">>>itchen_med set"
+                          on_error:
+                            - logger.log: ">>>ERROR itchen_med not set"
+              - buttons:
+                - id: button_ks3
+                  text: "dark"
+                  width: 1
+                  control:
+                    recolor: true
+                  on_click:
+                    then:                  
+                      - homeassistant.action: 
+                          action: scene.turn_on
+                          data:   
+                            entity_id: scene.kitchen_dark
+                          on_success:
+                            - logger.log: ">>>kitchen_dark"
+                          on_error:
+                            - logger.log: ">>>ERROR kitchen_dark not set"
+                    
+
+    ##############################
+    ##  CL - Ceiling Lights Page
+    ##############################        
+    - id: cl_page
+      bg_color: 0x404040
+      widgets:
+        
+        #######################
+        ## Page Header
+        #######################
+        - obj:
+            id: cl_header
+            width:  100%
+            height: 20
+            align: TOP_MID           
+            widgets:
+              - label:
+                  align: CENTER
+                  text: 'Ceiling Lights'
+                  
+        - slider:
+            id: cl_bright_slider
+            x: 70
+            y: 50
+            width: 50
+            height: 300
+            pad_all: 8
+            min_value: 0
+            max_value: 255
+            #bg_grad: brightness_gradient_id
+            bg_color: 0xFFFFFF
+            bg_grad_color: 0x000000
+            bg_grad_dir: VER
+            bg_opa: COVER                    # bg opacity
+            indicator:
+              bg_opa: 0
+            on_release:
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.kitchen_ceiling
+                    brightness: !lambda return int(x);  # x is float, need to convert
+                  
+        - slider:
+            id: cl_color_slider
+            x: 200
+            y: 50
+            width: 50
+            height: 300
+            pad_all: 8
+            min_value: 0
+            max_value: 255
+            #bg_grad: color_temp_gradient_id
+            bg_color: 0x6060ff
+            bg_grad_color: 0xFFA500
+            bg_grad_dir: VER
+            bg_opa: COVER                    # bg opacity
+            indicator:
+              bg_opa: 0
+            on_release:
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.kitchen_ceiling 
+                    color_temp_kelvin: !lambda return int((20 * x) + 2000);  ### <<<< needs tunning <<<<<
+                  
+    ##############################
+    ##  TL - Task Lights Page
+    ##############################        
+    - id: tl_page
+      widgets:
+        
+        #######################
+        ## Page Header
+        #######################
+        - obj:
+            id: tl_label
+            width:  100%
+            height: 20
+            align: TOP_MID
+            widgets:
+              - label:
+                  align: CENTER
+                  text: 'Task Lights'
+                  
+        - slider:
+            id: tl_bright_slider
+            x: 70
+            y: 50
+            width: 50
+            height: 300
+            pad_all: 8
+            min_value: 0
+            max_value: 255
+            bg_color: 0xFFFFFF
+            bg_grad_color: 0x000000
+            bg_grad_dir: VER
+            bg_opa: COVER                    # bg opacity
+            indicator:
+              bg_opa: 0
+            on_release:
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.${wled_undercounter}
+                    brightness: !lambda return int(x);  # x is float, need to convert                  
+        - slider:
+            id: tl_color_slider
+            x: 200
+            y: 50
+            width: 50
+            height: 300
+            pad_all: 8
+            min_value: 0
+            max_value: 255
+            bg_color: 0x6060ff
+            bg_grad_color: 0xFFA500
+            bg_grad_dir: VER
+            bg_opa: COVER                    # bg opacity
+            indicator:
+              bg_opa: 0
+            on_release:
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.${wled_undercounter} 
+                    color_temp_kelvin: !lambda return int((20 * x) + 2000);  ### <<<< needs tunning <<<<<
+
+              
+              
+    ##############################
+    ##  Misc Page
+    ##############################        
+    - id: misc_page
+      widgets:
+        
+        #######################
+        ## Page Header
+        #######################
+        - obj:
+            id: misc_label
+            width:  100%
+            height: 20
+            align: TOP_MID
+            widgets:
+              - label:
+                  align: CENTER
+                  text: 'Misc. Page'
+        - obj:
+            id: misc_button_container
+            align_to:
+              id: misc_label
+              align: OUT_BOTTOM_LEFT
+            width:  100%
+            height: 360  
+            layout:
+              type: flex 
+              flex_flow: column_wrap
+            widgets:
+                - button:
+                    width: 100%
+                    height: 104
+                    bg_color: 0xFF0000 # Red 
+                    widgets:
+                      - label:
+                          id: misc_red
+                          align: CENTER
+                          text: "RED" # m
+                    on_click:
+                      then:                  
+                        - homeassistant.action: 
+                            action: light.turn_on
+                            data:
+                              entity_id: light.${wled_undercounter} 
+                              effect: Pacifica
+                    
+                - button:
+                    width: 100%
+                    height: 104
+                    bg_color: 0x00FF00 # green
+                    widgets:
+                      - label:
+                          id: misc_grn
+                          align: CENTER
+                          text: "GREEN" # m
+                - button:
+                    width: 100%
+                    height: 104
+                    bg_color: 0x0000FF # blue
+                    widgets:
+                      - label:
+                          id: misc_blu
+                          align: CENTER
+                          text: "BLUE" # m
+
+  
