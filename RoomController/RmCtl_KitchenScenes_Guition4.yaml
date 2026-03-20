@@ -13,8 +13,9 @@
 #######################################################################
 
 substitutions:
-  device_name: rmctl_g4
-  Freindly_device_name: Room Controller Guition4
+  device_name: rmctl-g4
+  friendly_device_name: Room Controller Guition4
+  device_area: kitchen
 
   wled_undercounter_main:    wled_kitchen_main
   wled_undercounter:         wled_kitchen
@@ -37,7 +38,7 @@ api:
         ## Sets overall scale factor to 100%.  Does not actually turn the LEDs on
         action: light.turn_on   #<<<<<< TODO: Should only do this once <<<
         data:
-          entity_id: light.${wled_kitchen_main}
+          entity_id: light.${wled_undercounter_main}
           brightness: 100%
   
     
